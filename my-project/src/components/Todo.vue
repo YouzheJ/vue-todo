@@ -1,0 +1,176 @@
+<template>
+<div class="todo">
+    <header class="header">
+        <div class="todo">
+            <h1>todo example</h1>
+            <input class="new-todo"
+             autofocus
+             autocomplete="off"
+            placehloder="what needs to be done?"
+            v-mode="newTodo"
+            @keyup.enter="addTodo">
+        </div>
+    </header>
+    <section class="main" v-show="todos.length" v-cloak>
+        <input class="toggle-all" type="checkbox" v-model="allDone">
+        <ul class="todo-list">
+            <li v-for="todo in filteredTodos"
+                class="todo"
+                :key="todo.id"
+                :class="{ completed: todo.completed, editing: todo == editedTodo}">
+                <div class="view">
+                    <input class="toggle" type="checkbox" v-model="todo.completed">
+                    <label @dbclick="editTodo>(todo)>{{todo.title}}</label>
+                    <button class="destroy" @click="removeTodo(todo)"></button>
+                </div>
+                <input class="edit" type="text"
+                v-model="todo.title"
+                v-todo-focus="todo == editedTodo"
+                @blur="doneEdit(todo)"
+                @keyup.enter="doneEdit(todo)"
+                @keyup.esc="canelEdit(todo)">
+            </li>
+        </ul>
+    </section>
+    <footer class="info">
+        <p>Double-click to edit a todo</p>
+        <p>Written by <a href="http://evanyou.me">Evan You</a></p>
+        <p>Part of <a href="http://todomvc.com">TodoMvc</a></p>
+    </footer>
+</div>
+
+</template>
+
+<script>
+    var STORAGE_KEY = 'todos-vuejs-2.0'
+    var todoStorage = {
+      fetch: function () {
+        var todos = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[] ')
+        todos.forEach(function (todo, index) {
+          todo.id = index
+        })
+        todoStorage.uid = todos.length
+        return todos
+      },
+      save: function (todos) {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(todos))
+      }
+    }
+    var filters = {
+      all: function (todos) {
+        return todos
+      },
+      active: function (todos) {
+        return todos.filter(function (todo) {
+          return !todo.completed
+        })
+      },
+      completed: function (todos) {
+        return todos.filter(function (todo) {
+          return todo.completed
+        })
+      }
+    }
+    var app = new Vue({
+      data: {
+        todos: todoStorage.fetch(),
+        newTodo: '',
+        editedTodo: null,
+        visibility: 'all'
+      },
+      watch: {
+        todos: {
+          handler: function (todos) {
+            todoStorage.save(todos)
+          },
+          deep: true
+        }
+      },
+      computed: {
+        filterdTodos: function () {
+          return filters[this.visibility](this.todos)
+        },
+        remaining: function () {
+          return filters.active(this.todos).length
+        },
+        allDone: {
+          get: function () {
+            return this.remaining === 0
+          },
+          set: function (value) {
+            this.todos.forEach(function (todo) {
+              todo.completed = value
+            })
+          }
+        }
+      },
+      filters: {
+        pluralize: function (n) {
+          return n === 1 ? 'item' : 'items'
+        }
+      },
+      methods: {
+        addTodo: function () {
+          var value = this.newTodo && this.newTodo.trim()
+          if (!value) {
+            return
+          }
+          this.todos.push({
+            id: todoStorage.uid++,
+            title: value,
+            completed: false
+          })
+          this.newTodo = ''
+        },
+        removeTodo: function (todo) {
+          this.todos.splice(this.todos.indexOf(todo), 1)
+        },
+        editTodo: function (todo) {
+          this.beforeEditCache = todo.title
+          this.editedTodo = todo
+        },
+        doneEdit: function (todo) {
+          if (!this.editedTodo) {
+            return
+          }
+          this.editedTodo = null
+          todo.title = todo.title.trim()
+          if (!todo.title) {
+            this.removeTodo(todo)
+          }
+        },
+        cancelEdit: function (todo) {
+          this.editedTodo = null
+          todo.title = this.beforeEditCache
+        },
+        removeCompleted: function () {
+          this.todos = filters.active(this.todos)
+        }
+      },
+      directives: {
+        'todo-focus': function (el, value) {
+          if (value) {
+            el.focus()
+          }
+        }
+      }
+    })
+    function onHashChange () {
+      var visibility = window.location.hash.replace(/#\/?/, '')
+      if (filters[visibility]) {
+        app.visibility = visibility
+      } else {
+        window.location.hash = ''
+        app.visibility = 'all'
+      }
+    }
+    window.addEventListener('hashChange', onHashChange)
+    onHashChange()
+    app.$mount('.todoapp')
+</script>
+
+<style scoped>
+    [v-cloak] {
+        display:none;
+    }
+</style>
