@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>vue todo</title>
+    <link rel="stylesheet" href="style.css">
+    <script src=""></script>
+</head>
+<body>
+    <div class="app">
+        <h3>vue todo</h3>
+        <div class="input_content">
+            <input type="text" :placeholder=" message " v-model="message">
+            <span @click="createItem">sure</span>
+        </div>
+        <ol class="show_content_box" v-show="todos.length > 0">
+            <li class="show_content_item" v-for="(todo,index) in todos">
+                <span class="content">{{ todo }} {{ index }}</span>
+                <span @click="deleteItem(index)">×</span>
+            </li>
+        </ol>
+        <div class="example">
+            <my-component text-message="A custom component!!" :counter="todos.length"></my-component>
+            <child-component></child-component>
+        </div>
+    </div>
+
+    <script src="vue.js"></script>
+    <script src="main.js"></script>
+</body>
+</html>
